@@ -5118,6 +5118,42 @@ def speech(  # noqa: PLR0915
             kwargs=kwargs,
             logging_obj=logging_obj,
         )
+    elif custom_llm_provider == "elevenlabs":
+        from litellm.llms.elevenlabs.text_to_speech.handler import text_to_speech
+        
+        if voice is None or not (isinstance(voice, str)):
+            raise litellm.BadRequestError(
+                message="'voice' is required to be passed as a string for ElevenLabs TTS",
+                model=model,
+                llm_provider=custom_llm_provider,
+            )
+        
+        api_key = (
+            api_key
+            or litellm.api_key
+            or get_secret("ELEVENLABS_API_KEY")
+        )
+        
+        api_base = (
+            api_base
+            or litellm.api_base
+            or get_secret("ELEVENLABS_API_BASE")
+            or "https://api.elevenlabs.io/v1"
+        )
+        
+        import asyncio
+        response = asyncio.run(text_to_speech(
+            model=model,
+            input=input,
+            voice=voice,
+            api_key=api_key,
+            api_base=api_base,
+            logging_obj=logging_obj,
+            timeout=timeout,
+            litellm_params=litellm_params_dict,
+            optional_params=optional_params,
+            client=client,
+        ))
 
     if response is None:
         raise Exception(

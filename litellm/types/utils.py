@@ -2237,6 +2237,7 @@ class LlmProviders(str, Enum):
     SNOWFLAKE = "snowflake"
     LLAMA = "meta_llama"
     NSCALE = "nscale"
+    ELEVENLABS = "elevenlabs"
 
 
 # Create a set of all provider values for quick lookup

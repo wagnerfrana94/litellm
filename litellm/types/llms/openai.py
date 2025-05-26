@@ -897,6 +897,13 @@ OpenAIAudioTranscriptionOptionalParams = Literal[
 ]
 
 
+OpenAIAudioSpeechOptionalParams = Literal[
+    "voice",
+    "response_format",
+    "speed",
+]
+
+
 OpenAIImageVariationOptionalParams = Literal["n", "size", "response_format", "user"]
 
 

@@ -444,6 +444,7 @@ assemblyai_models: List = []
 snowflake_models: List = []
 llama_models: List = []
 nscale_models: List = []
+elevenlabs_models: List = []
 
 
 def is_bedrock_pricing_only_model(key: str) -> bool:
@@ -609,6 +610,8 @@ def add_known_models():
             snowflake_models.append(key)
         elif value.get("litellm_provider") == "featherless_ai":
             featherless_ai_models.append(key)
+        elif value.get("litellm_provider") == "elevenlabs":
+            elevenlabs_models.append(key)
 
 
 add_known_models()
@@ -689,6 +692,7 @@ model_list = (
     + llama_models
     + featherless_ai_models
     + nscale_models
+    + elevenlabs_models
 )
 
 model_list_set = set(model_list)
@@ -750,6 +754,7 @@ models_by_provider: dict = {
     "meta_llama": llama_models,
     "nscale": nscale_models,
     "featherless_ai": featherless_ai_models,
+    "elevenlabs": elevenlabs_models,
 }
 
 # mapping for those models which have larger equivalents

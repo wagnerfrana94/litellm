@@ -8229,6 +8229,167 @@ async def get_routes():
     return {"routes": routes}
 
 
+#### VOICE MANAGEMENT ENDPOINTS (OpenAI Compatible) ####
+# Note: These endpoints require ELEVENLABS_API_KEY environment variable to be set
+
+@router.post(
+    "/v1/voices",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
+async def create_voice(
+    request: Request,
+    fastapi_response: Response,
+    user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+):
+    """
+    Create a new voice clone using ElevenLabs API
+    
+    Requires: ELEVENLABS_API_KEY environment variable
+    
+    Expected request body:
+    {
+        "name": "Voice Name",
+        "description": "Optional description",
+        "files": ["base64_encoded_audio_file1", "base64_encoded_audio_file2"]
+    }
+    """
+    try:
+        from litellm.llms.elevenlabs.voice_management.handler import create_voice as elevenlabs_create_voice
+        import base64
+        
+        body = await request.json()
+        
+        # Validate required fields
+        if "name" not in body:
+            raise HTTPException(status_code=400, detail="Missing required field: name")
+        if "files" not in body or not body["files"]:
+            raise HTTPException(status_code=400, detail="Missing required field: files")
+        
+        # Decode base64 files
+        files_bytes = []
+        for file_b64 in body["files"]:
+            try:
+                file_bytes = base64.b64decode(file_b64)
+                files_bytes.append(file_bytes)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid base64 file: {str(e)}")
+        
+        # ElevenLabs API key should come from environment variables, not user API key
+        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
+        api_key = None  # Let the handler get the ElevenLabs API key from environment
+        
+        # Create voice
+        result = await elevenlabs_create_voice(
+            name=body["name"],
+            files=files_bytes,
+            description=body.get("description"),
+            api_key=api_key,
+        )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create voice: {str(e)}")
+
+
+@router.delete(
+    "/v1/voices/{voice_id}",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
+async def delete_voice(
+    voice_id: str,
+    user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+):
+    """
+    Delete a voice by ID using ElevenLabs API
+    
+    Requires: ELEVENLABS_API_KEY environment variable
+    """
+    try:
+        from litellm.llms.elevenlabs.voice_management.handler import delete_voice as elevenlabs_delete_voice
+        
+        # ElevenLabs API key should come from environment variables, not user API key
+        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
+        api_key = None  # Let the handler get the ElevenLabs API key from environment
+        
+        # Delete voice
+        result = await elevenlabs_delete_voice(
+            voice_id=voice_id,
+            api_key=api_key,
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete voice: {str(e)}")
+
+
+@router.get(
+    "/v1/voices/{voice_id}",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
+async def get_voice(
+    voice_id: str,
+    user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+):
+    """
+    Get voice information by ID using ElevenLabs API
+    
+    Requires: ELEVENLABS_API_KEY environment variable
+    """
+    try:
+        from litellm.llms.elevenlabs.voice_management.handler import get_voice as elevenlabs_get_voice
+        
+        # ElevenLabs API key should come from environment variables, not user API key
+        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
+        api_key = None  # Let the handler get the ElevenLabs API key from environment
+        
+        # Get voice info
+        result = await elevenlabs_get_voice(
+            voice_id=voice_id,
+            api_key=api_key,
+        )
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get voice: {str(e)}")
+
+
+@router.get(
+    "/v1/voices",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
+async def list_voices(
+    user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+):
+    """
+    List all available voices using ElevenLabs API
+    
+    Requires: ELEVENLABS_API_KEY environment variable
+    """
+    try:
+        from litellm.llms.elevenlabs.voice_management.handler import list_voices as elevenlabs_list_voices
+        
+        # ElevenLabs API key should come from environment variables, not user API key
+        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
+        api_key = None  # Let the handler get the ElevenLabs API key from environment
+        
+        # List voices
+        result = await elevenlabs_list_voices(api_key=api_key)
+        
+        return result
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list voices: {str(e)}")
+
+
 #### TEST ENDPOINTS ####
 # @router.get(
 #     "/token/generate",

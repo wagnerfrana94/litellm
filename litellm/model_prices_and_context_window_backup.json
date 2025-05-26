@@ -4392,7 +4392,7 @@
         "supports_function_calling": true,
         "supports_response_schema": true,
         "supports_tool_choice": true,
-        "deprecation_date": "2025-01-06"
+        "deprecation_date": "2025-1-6"
     },
     "groq/llama3-groq-8b-8192-tool-use-preview": {
         "max_tokens": 8192,
@@ -4405,7 +4405,7 @@
         "supports_function_calling": true,
         "supports_response_schema": true,
         "supports_tool_choice": true,
-        "deprecation_date": "2025-01-06"
+        "deprecation_date": "2025-1-6"
     },
     "groq/qwen-qwq-32b": {
         "max_tokens": 128000,
@@ -13274,5 +13274,45 @@
         "max_output_tokens": 4096,
         "litellm_provider": "featherless_ai",
         "mode": "chat"
+    },
+    "elevenlabs/eleven_multilingual_v2": {
+        "mode": "audio_speech",
+        "input_cost_per_character": 1.5e-4,
+        "output_cost_per_character": 0.0,
+        "output_cost_per_second": 0.0,
+        "litellm_provider": "elevenlabs",
+        "supported_modalities": ["text"],
+        "supported_output_modalities": ["audio"],
+        "supported_endpoints": ["/v1/audio/speech"]
+    },
+    "elevenlabs/eleven_turbo_v2": {
+        "mode": "audio_speech",
+        "input_cost_per_character": 1.0e-4,
+        "output_cost_per_character": 0.0,
+        "output_cost_per_second": 0.0,
+        "litellm_provider": "elevenlabs",
+        "supported_modalities": ["text"],
+        "supported_output_modalities": ["audio"],
+        "supported_endpoints": ["/v1/audio/speech"]
+    },
+    "elevenlabs/eleven_turbo_v2_5": {
+        "mode": "audio_speech",
+        "input_cost_per_character": 1.0e-4,
+        "output_cost_per_character": 0.0,
+        "output_cost_per_second": 0.0,
+        "litellm_provider": "elevenlabs",
+        "supported_modalities": ["text"],
+        "supported_output_modalities": ["audio"],
+        "supported_endpoints": ["/v1/audio/speech"]
+    },
+    "elevenlabs/eleven_monolingual_v1": {
+        "mode": "audio_speech",
+        "input_cost_per_character": 1.5e-4,
+        "output_cost_per_character": 0.0,
+        "output_cost_per_second": 0.0,
+        "litellm_provider": "elevenlabs",
+        "supported_modalities": ["text"],
+        "supported_output_modalities": ["audio"],
+        "supported_endpoints": ["/v1/audio/speech"]
     }
 }

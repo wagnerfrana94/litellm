@@ -8232,7 +8232,7 @@ async def get_routes():
 #### VOICE MANAGEMENT ENDPOINTS (OpenAI Compatible) ####
 
 @router.post(
-    "/v1/voices",
+    "/v1/audio/voices",
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
@@ -8325,7 +8325,7 @@ async def create_voice(
 
 
 @router.delete(
-    "/v1/voices/{voice_id}",
+    "/v1/audio/voices/{voice_id}",
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
@@ -8397,7 +8397,7 @@ async def delete_voice(
 
 
 @router.get(
-    "/v1/voices/{voice_id}",
+    "/v1/audio/voices/{voice_id}",
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
@@ -8469,7 +8469,7 @@ async def get_voice(
 
 
 @router.get(
-    "/v1/voices",
+    "/v1/audio/voices",
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )

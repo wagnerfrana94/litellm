@@ -23,10 +23,10 @@ ROUTE_ENDPOINT_MAPPING = {
     "arerank": "/rerank",
     "aresponses": "/responses",
     "aimage_edit": "/images/edits",
-    "avoice_create": "/voices",
-    "avoice_delete": "/voices",
-    "avoice_get": "/voices",
-    "avoice_list": "/voices",
+    "avoice_create": "/audio/voices",
+    "avoice_delete": "/audio/voices",
+    "avoice_get": "/audio/voices",
+    "avoice_list": "/audio/voices",
 }
 
 

@@ -8230,7 +8230,6 @@ async def get_routes():
 
 
 #### VOICE MANAGEMENT ENDPOINTS (OpenAI Compatible) ####
-# Note: These endpoints require ELEVENLABS_API_KEY environment variable to be set
 
 @router.post(
     "/v1/voices",
@@ -8243,56 +8242,86 @@ async def create_voice(
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
 ):
     """
-    Create a new voice clone using ElevenLabs API
+    Create a new voice clone.
     
-    Requires: ELEVENLABS_API_KEY environment variable
+    Supports multiple providers based on model parameter:
+    - elevenlabs/voice (default)
+    - openai/voice (future)
     
     Expected request body:
     {
         "name": "Voice Name",
-        "description": "Optional description",
-        "files": ["base64_encoded_audio_file1", "base64_encoded_audio_file2"]
+        "description": "Optional description", 
+        "files": ["base64_encoded_audio_file1", "base64_encoded_audio_file2"],
+        "model": "elevenlabs/voice"  // optional, defaults to elevenlabs/voice
     }
     """
+    global proxy_logging_obj
+    data: Dict = {}
     try:
-        from litellm.llms.elevenlabs.voice_management.handler import create_voice as elevenlabs_create_voice
-        import base64
+        # Use orjson to parse JSON data
+        body = await request.body()
+        data = orjson.loads(body)
         
-        body = await request.json()
-        
-        # Validate required fields
-        if "name" not in body:
-            raise HTTPException(status_code=400, detail="Missing required field: name")
-        if "files" not in body or not body["files"]:
-            raise HTTPException(status_code=400, detail="Missing required field: files")
-        
-        # Decode base64 files
-        files_bytes = []
-        for file_b64 in body["files"]:
-            try:
-                file_bytes = base64.b64decode(file_b64)
-                files_bytes.append(file_bytes)
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=f"Invalid base64 file: {str(e)}")
-        
-        # ElevenLabs API key should come from environment variables, not user API key
-        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
-        api_key = None  # Let the handler get the ElevenLabs API key from environment
-        
-        # Create voice
-        result = await elevenlabs_create_voice(
-            name=body["name"],
-            files=files_bytes,
-            description=body.get("description"),
-            api_key=api_key,
+        # Include original request and headers in the data
+        data = await add_litellm_data_to_request(
+            data=data,
+            request=request,
+            general_settings=general_settings,
+            user_api_key_dict=user_api_key_dict,
+            version=version,
+            proxy_config=proxy_config,
         )
+
+        if data.get("user", None) is None and user_api_key_dict.user_id is not None:
+            data["user"] = user_api_key_dict.user_id
+
+        # Set default model if not provided
+        if "model" not in data:
+            data["model"] = "elevenlabs/voice"
+
+        # Decode base64 files if provided
+        if "files" in data and isinstance(data["files"], list):
+            import base64
+            files_bytes = []
+            for file_b64 in data["files"]:
+                try:
+                    file_bytes = base64.b64decode(file_b64)
+                    files_bytes.append(file_bytes)
+                except Exception as e:
+                    raise HTTPException(status_code=400, detail=f"Invalid base64 file: {str(e)}")
+            data["files"] = files_bytes
+
+        ### CALL HOOKS ### - modify incoming data / reject request before calling the model
+        data = await proxy_logging_obj.pre_call_hook(
+            user_api_key_dict=user_api_key_dict, data=data, call_type="voice_create"
+        )
+
+        ## ROUTE TO CORRECT ENDPOINT ##
+        llm_call = await route_request(
+            data=data,
+            route_type="avoice_create",
+            llm_router=llm_router,
+            user_model=user_model,
+        )
+        response = await llm_call
+
+        ### ALERTING ###
+        asyncio.create_task(
+            proxy_logging_obj.update_request_status(
+                litellm_call_id=data.get("litellm_call_id", ""), status="success"
+            )
+        )
+
+        return response
         
-        return result
-        
-    except HTTPException:
-        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create voice: {str(e)}")
+        raise ProxyException(
+            message=str(e),
+            type="internal_error",
+            param=None,
+            code=getattr(e, "status_code", 500),
+        )
 
 
 @router.delete(
@@ -8302,30 +8331,69 @@ async def create_voice(
 )
 async def delete_voice(
     voice_id: str,
+    request: Request,
+    fastapi_response: Response,
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+    model: str = "elevenlabs/voice",
 ):
     """
-    Delete a voice by ID using ElevenLabs API
+    Delete a voice by ID.
     
-    Requires: ELEVENLABS_API_KEY environment variable
+    Supports multiple providers based on model parameter:
+    - elevenlabs/voice (default)
+    - openai/voice (future)
     """
+    global proxy_logging_obj
+    data: Dict = {}
     try:
-        from litellm.llms.elevenlabs.voice_management.handler import delete_voice as elevenlabs_delete_voice
+        data = {
+            "voice_id": voice_id,
+            "model": model,
+        }
         
-        # ElevenLabs API key should come from environment variables, not user API key
-        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
-        api_key = None  # Let the handler get the ElevenLabs API key from environment
-        
-        # Delete voice
-        result = await elevenlabs_delete_voice(
-            voice_id=voice_id,
-            api_key=api_key,
+        # Include original request and headers in the data
+        data = await add_litellm_data_to_request(
+            data=data,
+            request=request,
+            general_settings=general_settings,
+            user_api_key_dict=user_api_key_dict,
+            version=version,
+            proxy_config=proxy_config,
         )
-        
-        return result
+
+        if data.get("user", None) is None and user_api_key_dict.user_id is not None:
+            data["user"] = user_api_key_dict.user_id
+
+        ### CALL HOOKS ### - modify incoming data / reject request before calling the model
+        data = await proxy_logging_obj.pre_call_hook(
+            user_api_key_dict=user_api_key_dict, data=data, call_type="voice_delete"
+        )
+
+        ## ROUTE TO CORRECT ENDPOINT ##
+        llm_call = await route_request(
+            data=data,
+            route_type="avoice_delete",
+            llm_router=llm_router,
+            user_model=user_model,
+        )
+        response = await llm_call
+
+        ### ALERTING ###
+        asyncio.create_task(
+            proxy_logging_obj.update_request_status(
+                litellm_call_id=data.get("litellm_call_id", ""), status="success"
+            )
+        )
+
+        return response
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete voice: {str(e)}")
+        raise ProxyException(
+            message=str(e),
+            type="internal_error",
+            param=None,
+            code=getattr(e, "status_code", 500),
+        )
 
 
 @router.get(
@@ -8335,30 +8403,69 @@ async def delete_voice(
 )
 async def get_voice(
     voice_id: str,
+    request: Request,
+    fastapi_response: Response,
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+    model: str = "elevenlabs/voice",
 ):
     """
-    Get voice information by ID using ElevenLabs API
+    Get voice information by ID.
     
-    Requires: ELEVENLABS_API_KEY environment variable
+    Supports multiple providers based on model parameter:
+    - elevenlabs/voice (default)
+    - openai/voice (future)
     """
+    global proxy_logging_obj
+    data: Dict = {}
     try:
-        from litellm.llms.elevenlabs.voice_management.handler import get_voice as elevenlabs_get_voice
+        data = {
+            "voice_id": voice_id,
+            "model": model,
+        }
         
-        # ElevenLabs API key should come from environment variables, not user API key
-        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
-        api_key = None  # Let the handler get the ElevenLabs API key from environment
-        
-        # Get voice info
-        result = await elevenlabs_get_voice(
-            voice_id=voice_id,
-            api_key=api_key,
+        # Include original request and headers in the data
+        data = await add_litellm_data_to_request(
+            data=data,
+            request=request,
+            general_settings=general_settings,
+            user_api_key_dict=user_api_key_dict,
+            version=version,
+            proxy_config=proxy_config,
         )
-        
-        return result
+
+        if data.get("user", None) is None and user_api_key_dict.user_id is not None:
+            data["user"] = user_api_key_dict.user_id
+
+        ### CALL HOOKS ### - modify incoming data / reject request before calling the model
+        data = await proxy_logging_obj.pre_call_hook(
+            user_api_key_dict=user_api_key_dict, data=data, call_type="voice_get"
+        )
+
+        ## ROUTE TO CORRECT ENDPOINT ##
+        llm_call = await route_request(
+            data=data,
+            route_type="avoice_get",
+            llm_router=llm_router,
+            user_model=user_model,
+        )
+        response = await llm_call
+
+        ### ALERTING ###
+        asyncio.create_task(
+            proxy_logging_obj.update_request_status(
+                litellm_call_id=data.get("litellm_call_id", ""), status="success"
+            )
+        )
+
+        return response
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get voice: {str(e)}")
+        raise ProxyException(
+            message=str(e),
+            type="internal_error",
+            param=None,
+            code=getattr(e, "status_code", 500),
+        )
 
 
 @router.get(
@@ -8367,27 +8474,68 @@ async def get_voice(
     tags=["voices"],
 )
 async def list_voices(
+    request: Request,
+    fastapi_response: Response,
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
+    model: str = "elevenlabs/voice",
 ):
     """
-    List all available voices using ElevenLabs API
+    List all available voices.
     
-    Requires: ELEVENLABS_API_KEY environment variable
+    Supports multiple providers based on model parameter:
+    - elevenlabs/voice (default)
+    - openai/voice (future)
     """
+    global proxy_logging_obj
+    data: Dict = {}
     try:
-        from litellm.llms.elevenlabs.voice_management.handler import list_voices as elevenlabs_list_voices
+        data = {
+            "model": model,
+        }
         
-        # ElevenLabs API key should come from environment variables, not user API key
-        # The user_api_key_dict.api_key is for LiteLLM authentication, not ElevenLabs
-        api_key = None  # Let the handler get the ElevenLabs API key from environment
-        
-        # List voices
-        result = await elevenlabs_list_voices(api_key=api_key)
-        
-        return result
+        # Include original request and headers in the data
+        data = await add_litellm_data_to_request(
+            data=data,
+            request=request,
+            general_settings=general_settings,
+            user_api_key_dict=user_api_key_dict,
+            version=version,
+            proxy_config=proxy_config,
+        )
+
+        if data.get("user", None) is None and user_api_key_dict.user_id is not None:
+            data["user"] = user_api_key_dict.user_id
+
+        ### CALL HOOKS ### - modify incoming data / reject request before calling the model
+        data = await proxy_logging_obj.pre_call_hook(
+            user_api_key_dict=user_api_key_dict, data=data, call_type="voice_list"
+        )
+
+        ## ROUTE TO CORRECT ENDPOINT ##
+        llm_call = await route_request(
+            data=data,
+            route_type="avoice_list",
+            llm_router=llm_router,
+            user_model=user_model,
+        )
+        response = await llm_call
+
+        ### ALERTING ###
+        asyncio.create_task(
+            proxy_logging_obj.update_request_status(
+                litellm_call_id=data.get("litellm_call_id", ""), status="success"
+            )
+        )
+
+        return response
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to list voices: {str(e)}")
+        raise ProxyException(
+            message=str(e),
+            type="internal_error",
+            param=None,
+            code=getattr(e, "status_code", 500),
+        )
 
 
 #### TEST ENDPOINTS ####

@@ -6595,6 +6595,107 @@ class Router:
         litellm.cache = None
         self.cache.flush_cache()
 
+    async def avoice_create(self, **kwargs):
+        """
+        Create a new voice clone.
+        
+        Args:
+            name (str): The name of the voice
+            files (List[bytes]): List of audio file bytes
+            description (str, optional): Description of the voice
+            model (str, optional): Provider model to use (defaults to "elevenlabs/voice")
+        
+        Returns:
+            Dict containing voice creation response
+        """
+        try:
+            kwargs.setdefault("model", "elevenlabs/voice")
+            return await litellm.avoice_create_async(**kwargs)
+        except Exception as e:
+            asyncio.create_task(
+                send_llm_exception_alert(
+                    litellm_router_instance=self,
+                    request_kwargs=kwargs,
+                    error_traceback_str=traceback.format_exc(),
+                    original_exception=e,
+                )
+            )
+            raise e
+
+    async def avoice_delete(self, **kwargs):
+        """
+        Delete a voice by ID.
+        
+        Args:
+            voice_id (str): The ID of the voice to delete
+            model (str, optional): Provider model to use (defaults to "elevenlabs/voice")
+        
+        Returns:
+            Dict containing deletion response
+        """
+        try:
+            kwargs.setdefault("model", "elevenlabs/voice")
+            return await litellm.avoice_delete_async(**kwargs)
+        except Exception as e:
+            asyncio.create_task(
+                send_llm_exception_alert(
+                    litellm_router_instance=self,
+                    request_kwargs=kwargs,
+                    error_traceback_str=traceback.format_exc(),
+                    original_exception=e,
+                )
+            )
+            raise e
+
+    async def avoice_get(self, **kwargs):
+        """
+        Get voice information by ID.
+        
+        Args:
+            voice_id (str): The ID of the voice to retrieve
+            model (str, optional): Provider model to use (defaults to "elevenlabs/voice")
+        
+        Returns:
+            Dict containing voice information
+        """
+        try:
+            kwargs.setdefault("model", "elevenlabs/voice")
+            return await litellm.avoice_get_async(**kwargs)
+        except Exception as e:
+            asyncio.create_task(
+                send_llm_exception_alert(
+                    litellm_router_instance=self,
+                    request_kwargs=kwargs,
+                    error_traceback_str=traceback.format_exc(),
+                    original_exception=e,
+                )
+            )
+            raise e
+
+    async def avoice_list(self, **kwargs):
+        """
+        List all available voices.
+        
+        Args:
+            model (str, optional): Provider model to use (defaults to "elevenlabs/voice")
+        
+        Returns:
+            Dict containing list of voices
+        """
+        try:
+            kwargs.setdefault("model", "elevenlabs/voice")
+            return await litellm.avoice_list_async(**kwargs)
+        except Exception as e:
+            asyncio.create_task(
+                send_llm_exception_alert(
+                    litellm_router_instance=self,
+                    request_kwargs=kwargs,
+                    error_traceback_str=traceback.format_exc(),
+                    original_exception=e,
+                )
+            )
+            raise e
+
     def reset(self):
         ## clean up on close
         litellm.success_callback = []

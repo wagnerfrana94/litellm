@@ -5164,6 +5164,176 @@ def speech(  # noqa: PLR0915
     return response
 
 
+##### Voice Management Endpoints #######################
+
+
+def avoice_create(*args, **kwargs):
+    """
+    Creates a new voice clone.
+    
+    Args:
+        name (str): The name of the voice
+        files (List[bytes]): List of audio file bytes
+        description (str, optional): Description of the voice
+        model (str, optional): Provider model to use (e.g., "elevenlabs/voice")
+        
+    Returns:
+        Dict containing voice creation response
+    """
+    return asyncio.run(avoice_create_async(*args, **kwargs))
+
+
+async def avoice_create_async(*args, **kwargs):
+    """
+    Async version of voice creation
+    """
+    model = kwargs.get("model", "elevenlabs/voice")
+    
+    _, custom_llm_provider, _, _ = get_llm_provider(
+        model=model, api_base=kwargs.get("api_base", None)
+    )
+    
+    if custom_llm_provider == "elevenlabs":
+        from litellm.llms.elevenlabs.voice_management.handler import create_voice as elevenlabs_create_voice
+        
+        # Get required parameters
+        name = kwargs.get("name")
+        files = kwargs.get("files", [])
+        description = kwargs.get("description")
+        api_key = kwargs.get("api_key")
+        
+        if not name:
+            raise ValueError("'name' parameter is required for voice creation")
+        if not files:
+            raise ValueError("'files' parameter is required for voice creation")
+        
+        return await elevenlabs_create_voice(
+            name=name,
+            files=files,
+            description=description,
+            api_key=api_key,
+        )
+    
+    raise ValueError(f"Voice creation not supported for provider: {custom_llm_provider}")
+
+
+def avoice_delete(*args, **kwargs):
+    """
+    Deletes a voice by ID.
+    
+    Args:
+        voice_id (str): The ID of the voice to delete
+        model (str, optional): Provider model to use (e.g., "elevenlabs/voice")
+        
+    Returns:
+        Dict containing deletion response
+    """
+    return asyncio.run(avoice_delete_async(*args, **kwargs))
+
+
+async def avoice_delete_async(*args, **kwargs):
+    """
+    Async version of voice deletion
+    """
+    model = kwargs.get("model", "elevenlabs/voice")
+    
+    _, custom_llm_provider, _, _ = get_llm_provider(
+        model=model, api_base=kwargs.get("api_base", None)
+    )
+    
+    if custom_llm_provider == "elevenlabs":
+        from litellm.llms.elevenlabs.voice_management.handler import delete_voice as elevenlabs_delete_voice
+        
+        voice_id = kwargs.get("voice_id")
+        api_key = kwargs.get("api_key")
+        
+        if not voice_id:
+            raise ValueError("'voice_id' parameter is required for voice deletion")
+        
+        return await elevenlabs_delete_voice(
+            voice_id=voice_id,
+            api_key=api_key,
+        )
+    
+    raise ValueError(f"Voice deletion not supported for provider: {custom_llm_provider}")
+
+
+def avoice_get(*args, **kwargs):
+    """
+    Gets voice information by ID.
+    
+    Args:
+        voice_id (str): The ID of the voice to retrieve
+        model (str, optional): Provider model to use (e.g., "elevenlabs/voice")
+        
+    Returns:
+        Dict containing voice information
+    """
+    return asyncio.run(avoice_get_async(*args, **kwargs))
+
+
+async def avoice_get_async(*args, **kwargs):
+    """
+    Async version of voice retrieval
+    """
+    model = kwargs.get("model", "elevenlabs/voice")
+    
+    _, custom_llm_provider, _, _ = get_llm_provider(
+        model=model, api_base=kwargs.get("api_base", None)
+    )
+    
+    if custom_llm_provider == "elevenlabs":
+        from litellm.llms.elevenlabs.voice_management.handler import get_voice as elevenlabs_get_voice
+        
+        voice_id = kwargs.get("voice_id")
+        api_key = kwargs.get("api_key")
+        
+        if not voice_id:
+            raise ValueError("'voice_id' parameter is required for voice retrieval")
+        
+        return await elevenlabs_get_voice(
+            voice_id=voice_id,
+            api_key=api_key,
+        )
+    
+    raise ValueError(f"Voice retrieval not supported for provider: {custom_llm_provider}")
+
+
+def avoice_list(*args, **kwargs):
+    """
+    Lists all available voices.
+    
+    Args:
+        model (str, optional): Provider model to use (e.g., "elevenlabs/voice")
+        
+    Returns:
+        Dict containing list of voices
+    """
+    return asyncio.run(avoice_list_async(*args, **kwargs))
+
+
+async def avoice_list_async(*args, **kwargs):
+    """
+    Async version of voice listing
+    """
+    model = kwargs.get("model", "elevenlabs/voice")
+    
+    _, custom_llm_provider, _, _ = get_llm_provider(
+        model=model, api_base=kwargs.get("api_base", None)
+    )
+    
+    if custom_llm_provider == "elevenlabs":
+        from litellm.llms.elevenlabs.voice_management.handler import list_voices as elevenlabs_list_voices
+        
+        api_key = kwargs.get("api_key")
+        
+        return await elevenlabs_list_voices(
+            api_key=api_key,
+        )
+    
+    raise ValueError(f"Voice listing not supported for provider: {custom_llm_provider}")
+
+
 ##### Health Endpoints #######################
 
 

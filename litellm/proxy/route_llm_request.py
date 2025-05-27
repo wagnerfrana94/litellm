@@ -23,6 +23,10 @@ ROUTE_ENDPOINT_MAPPING = {
     "arerank": "/rerank",
     "aresponses": "/responses",
     "aimage_edit": "/images/edits",
+    "avoice_create": "/voices",
+    "avoice_delete": "/voices",
+    "avoice_get": "/voices",
+    "avoice_list": "/voices",
 }
 
 
@@ -71,6 +75,10 @@ async def route_request(
         "adelete_responses",
         "_arealtime",  # private function for realtime API
         "aimage_edit",
+        "avoice_create",
+        "avoice_delete",
+        "avoice_get",
+        "avoice_list",
     ],
 ):
     """
@@ -134,8 +142,8 @@ async def route_request(
                 or len(llm_router.pattern_router.patterns) > 0
             ):
                 return getattr(llm_router, f"{route_type}")(**data)
-            elif route_type in ["amoderation", "aget_responses", "adelete_responses"]:
-                # moderation endpoint does not require `model` parameter
+            elif route_type in ["amoderation", "aget_responses", "adelete_responses", "avoice_create", "avoice_delete", "avoice_get", "avoice_list"]:
+                # moderation and voice endpoints do not require `model` parameter
                 return getattr(llm_router, f"{route_type}")(**data)
 
     elif user_model is not None:

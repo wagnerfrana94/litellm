@@ -8151,6 +8151,11 @@ async def get_routes():
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
+@router.post(
+    "/audio/voices",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
 async def create_voice(
     request: Request,
     fastapi_response: Response,
@@ -8244,6 +8249,11 @@ async def create_voice(
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
+@router.delete(
+    "/audio/voices/{voice_id}",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
 async def delete_voice(
     voice_id: str,
     request: Request,
@@ -8316,6 +8326,11 @@ async def delete_voice(
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )
+@router.get(
+    "/audio/voices/{voice_id}",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
 async def get_voice(
     voice_id: str,
     request: Request,
@@ -8385,6 +8400,11 @@ async def get_voice(
 
 @router.get(
     "/v1/audio/voices",
+    dependencies=[Depends(user_api_key_auth)],
+    tags=["voices"],
+)
+@router.get(
+    "/audio/voices",
     dependencies=[Depends(user_api_key_auth)],
     tags=["voices"],
 )

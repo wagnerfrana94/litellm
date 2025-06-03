@@ -16,7 +16,7 @@ class ElevenLabsVoiceManager:
     def __init__(self):
         self.api_base = "https://api.elevenlabs.io/v1"
 
-    def _get_headers(self, api_key: Optional[str] = None) -> Dict[str, str]:
+    def _get_headers(self, api_key: Optional[str] = None, include_content_type: bool = True) -> Dict[str, str]:
         """Get headers for ElevenLabs API requests"""
         # Try multiple sources for the API key
         api_key = (
@@ -33,16 +33,22 @@ class ElevenLabsVoiceManager:
                 headers={},
             )
         
-        return {
+        headers = {
             "xi-api-key": api_key,
-            "Content-Type": "application/json",
         }
+        
+        if include_content_type:
+            headers["Content-Type"] = "application/json"
+            
+        return headers
 
     async def create_voice(
         self,
         name: str,
         files: List[bytes],  # Audio files content
         description: Optional[str] = None,
+        remove_background_noise: Optional[bool] = None,
+        labels: Optional[Dict[str, Any]] = None,
         api_key: Optional[str] = None,
         timeout: Optional[Union[float, httpx.Timeout]] = None,
     ) -> Dict[str, Any]:
@@ -53,13 +59,16 @@ class ElevenLabsVoiceManager:
             name: Name for the voice
             files: List of audio file contents (bytes)
             description: Optional description for the voice
+            remove_background_noise: Optional boolean to remove background noise
+            labels: Optional dictionary of labels for the voice
             api_key: Optional API key
             timeout: Request timeout
             
         Returns:
             Dict containing voice creation response
         """
-        headers = self._get_headers(api_key)
+        # Don't include Content-Type header for multipart form data - let httpx set it automatically
+        headers = self._get_headers(api_key, include_content_type=False)
         url = f"{self.api_base}/voices/add"
         
         # Prepare multipart form data
@@ -69,6 +78,13 @@ class ElevenLabsVoiceManager:
         
         if description:
             form_data["description"] = description
+            
+        if remove_background_noise is not None:
+            form_data["remove_background_noise"] = "true" if remove_background_noise else "false"
+            
+        if labels:
+            import json
+            form_data["labels"] = json.dumps(labels)
         
         # Add files to form data
         files_data = []
@@ -215,6 +231,8 @@ async def create_voice(
     name: str,
     files: List[bytes],
     description: Optional[str] = None,
+    remove_background_noise: Optional[bool] = None,
+    labels: Optional[Dict[str, Any]] = None,
     api_key: Optional[str] = None,
     timeout: Optional[Union[float, httpx.Timeout]] = None,
 ) -> Dict[str, Any]:
@@ -223,6 +241,8 @@ async def create_voice(
         name=name,
         files=files,
         description=description,
+        remove_background_noise=remove_background_noise,
+        labels=labels,
         api_key=api_key,
         timeout=timeout,
     )

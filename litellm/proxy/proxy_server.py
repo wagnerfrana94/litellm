@@ -8159,6 +8159,12 @@ async def get_routes():
 async def create_voice(
     request: Request,
     fastapi_response: Response,
+    file: UploadFile = File(...),
+    name: str = Form(...),
+    description: Optional[str] = Form(None),
+    model: Optional[str] = Form(None),
+    remove_background_noise: Optional[bool] = Form(False),
+    labels: Optional[str] = Form(None),
     user_api_key_dict: UserAPIKeyAuth = Depends(user_api_key_auth),
 ):
     """
@@ -8168,20 +8174,38 @@ async def create_voice(
     - elevenlabs/voice (default)
     - openai/voice (future)
     
-    Expected request body:
-    {
-        "name": "Voice Name",
-        "description": "Optional description", 
-        "files": ["base64_encoded_audio_file1", "base64_encoded_audio_file2"],
-        "model": "elevenlabs/voice"  // optional, defaults to elevenlabs/voice
-    }
+    Expected form data:
+    - file: Audio file (blob/binary data)
+    - name: Voice name (required)
+    - description: Optional description
+    - model: Optional model (defaults to elevenlabs/voice)
+    - remove_background_noise: Optional boolean (defaults to false)
+    - labels: Optional serialized dictionary for voice metadata
     """
     global proxy_logging_obj
     data: Dict = {}
     try:
-        # Use orjson to parse JSON data
-        body = await request.body()
-        data = orjson.loads(body)
+        # Read file content as bytes
+        file_content = await file.read()
+        
+        # Parse labels if provided (should be JSON string)
+        parsed_labels = None
+        if labels:
+            try:
+                import json
+                parsed_labels = json.loads(labels)
+            except (json.JSONDecodeError, TypeError):
+                raise HTTPException(status_code=400, detail="Invalid labels format. Must be a valid JSON string.")
+        
+        # Create data dictionary from form fields
+        data = {
+            "name": name,
+            "description": description,
+            "model": model or "elevenlabs/voice",
+            "files": [file_content],  # Single file as list for compatibility
+            "remove_background_noise": remove_background_noise,
+            "labels": parsed_labels
+        }
         
         # Include original request and headers in the data
         data = await add_litellm_data_to_request(
@@ -8195,22 +8219,6 @@ async def create_voice(
 
         if data.get("user", None) is None and user_api_key_dict.user_id is not None:
             data["user"] = user_api_key_dict.user_id
-
-        # Set default model if not provided
-        if "model" not in data:
-            data["model"] = "elevenlabs/voice"
-
-        # Decode base64 files if provided
-        if "files" in data and isinstance(data["files"], list):
-            import base64
-            files_bytes = []
-            for file_b64 in data["files"]:
-                try:
-                    file_bytes = base64.b64decode(file_b64)
-                    files_bytes.append(file_bytes)
-                except Exception as e:
-                    raise HTTPException(status_code=400, detail=f"Invalid base64 file: {str(e)}")
-            data["files"] = files_bytes
 
         ### CALL HOOKS ### - modify incoming data / reject request before calling the model
         data = await proxy_logging_obj.pre_call_hook(

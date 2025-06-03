@@ -5221,6 +5221,8 @@ async def avoice_create_async(*args, **kwargs):
         name = kwargs.get("name")
         files = kwargs.get("files", [])
         description = kwargs.get("description")
+        remove_background_noise = kwargs.get("remove_background_noise")
+        labels = kwargs.get("labels")
         api_key = kwargs.get("api_key")
         
         if not name:
@@ -5232,6 +5234,8 @@ async def avoice_create_async(*args, **kwargs):
             name=name,
             files=files,
             description=description,
+            remove_background_noise=remove_background_noise,
+            labels=labels,
             api_key=api_key,
         )
     
